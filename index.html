@@ -1,0 +1,1376 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Mi Calendario</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      color: white;
+      min-height: 100vh;
+      background: #06111f;
+    }
+
+    /*
+      FOTO DE FONDO
+
+      Si después queremos usar otra foto de Messi,
+      solamente cambiamos esta URL.
+    */
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+
+      background:
+        linear-gradient(
+          rgba(3, 15, 30, 0.78),
+          rgba(3, 15, 30, 0.88)
+        ),
+        url("https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Lionel-Messi-Argentina-2022-FIFA-World-Cup.jpg/1280px-Lionel-Messi-Argentina-2022-FIFA-World-Cup.jpg");
+
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
+
+      z-index: -1;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 1100px;
+      margin: auto;
+      padding: 20px;
+    }
+
+    /* ------------------------- */
+    /* ENCABEZADO */
+    /* ------------------------- */
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 15px;
+      flex-wrap: wrap;
+    }
+
+    .titulo {
+      font-size: 38px;
+      font-weight: bold;
+    }
+
+    .botones-header {
+      display: flex;
+      gap: 10px;
+    }
+
+    button,
+    select,
+    input {
+      font-family: inherit;
+    }
+
+    button {
+      border: none;
+      border-radius: 10px;
+      padding: 10px 15px;
+
+      background: #0d355e;
+      color: white;
+
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    button:hover {
+      background: #15518d;
+      transform: translateY(-1px);
+    }
+
+    /* ------------------------- */
+    /* MES */
+    /* ------------------------- */
+
+    .selector-mes {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 20px;
+
+      margin: 25px 0;
+    }
+
+    .selector-mes h2 {
+      min-width: 280px;
+      text-align: center;
+      font-size: 30px;
+    }
+
+    .flecha {
+      font-size: 20px;
+      width: 45px;
+      height: 45px;
+      padding: 0;
+    }
+
+    /* ------------------------- */
+    /* CALENDARIO */
+    /* ------------------------- */
+
+    .calendario {
+      background: rgba(3, 17, 32, 0.87);
+
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 18px;
+
+      overflow: hidden;
+
+      backdrop-filter: blur(8px);
+    }
+
+    .dias-semana,
+    .dias {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+    }
+
+    .dia-semana {
+      text-align: center;
+      font-weight: bold;
+
+      padding: 14px 5px;
+
+      background: rgba(13, 53, 94, 0.9);
+    }
+
+    .dia {
+      min-height: 115px;
+
+      padding: 8px;
+
+      border-top: 1px solid rgba(255,255,255,0.08);
+      border-right: 1px solid rgba(255,255,255,0.08);
+
+      cursor: pointer;
+
+      transition: 0.15s;
+    }
+
+    .dia:hover {
+      background: rgba(21, 81, 141, 0.3);
+    }
+
+    .dia:nth-child(7n) {
+      border-right: none;
+    }
+
+    .dia-otro-mes {
+      opacity: 0.3;
+    }
+
+    /* Número del día */
+
+    .numero {
+      width: 30px;
+      height: 30px;
+
+      display: inline-flex;
+
+      justify-content: center;
+      align-items: center;
+
+      font-weight: bold;
+    }
+
+    /* Día de HOY */
+
+    .hoy .numero {
+      border: 2px solid white;
+      border-radius: 50%;
+    }
+
+    /*
+      EVENTO
+
+      El puntito queda ABAJO del número,
+      como pediste.
+    */
+
+    .dia-con-evento .numero {
+      background: #1769aa;
+      border-radius: 50%;
+    }
+
+    .puntito {
+      width: 6px;
+      height: 6px;
+
+      background: #5caeff;
+
+      border-radius: 50%;
+
+      margin: 3px auto 0 auto;
+    }
+
+    /* Eventos visibles dentro del calendario */
+
+    .evento-mini {
+      margin-top: 7px;
+
+      padding: 5px 7px;
+
+      border-radius: 7px;
+
+      background: rgba(13, 53, 94, 0.95);
+
+      font-size: 12px;
+
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+
+    .evento-mini .hora {
+      opacity: 0.7;
+      font-size: 11px;
+    }
+
+    /* ------------------------- */
+    /* PANEL DE EVENTOS */
+    /* ------------------------- */
+
+    .panel {
+      margin-top: 20px;
+
+      padding: 20px;
+
+      background: rgba(3, 17, 32, 0.92);
+
+      border: 1px solid rgba(255,255,255,0.15);
+
+      border-radius: 18px;
+    }
+
+    .panel h3 {
+      margin-bottom: 15px;
+      font-size: 22px;
+    }
+
+    .formulario {
+      display: grid;
+
+      grid-template-columns:
+        2fr
+        1fr
+        1fr
+        1fr
+        auto;
+
+      gap: 10px;
+    }
+
+    input,
+    select {
+      width: 100%;
+
+      padding: 11px;
+
+      border: none;
+      border-radius: 10px;
+
+      background: #eaf1f8;
+      color: #06111f;
+    }
+
+    .lista-eventos {
+      margin-top: 15px;
+
+      display: flex;
+      flex-direction: column;
+
+      gap: 10px;
+    }
+
+    .evento-completo {
+      display: flex;
+
+      justify-content: space-between;
+      align-items: center;
+
+      gap: 15px;
+
+      padding: 12px;
+
+      background: rgba(13, 53, 94, 0.85);
+
+      border-radius: 10px;
+    }
+
+    .evento-info {
+      line-height: 1.5;
+    }
+
+    .evento-info strong {
+      font-size: 16px;
+    }
+
+    .evento-info small {
+      opacity: 0.75;
+    }
+
+    .sin-eventos {
+      opacity: 0.6;
+    }
+
+    .nota {
+      margin-top: 15px;
+
+      font-size: 12px;
+
+      opacity: 0.55;
+    }
+
+    /* ------------------------- */
+    /* RESPONSIVE */
+    /* ------------------------- */
+
+    @media (max-width: 750px) {
+
+      .app {
+        padding: 12px;
+      }
+
+      .titulo {
+        font-size: 28px;
+      }
+
+      .selector-mes h2 {
+        min-width: 0;
+        font-size: 22px;
+      }
+
+      .dia {
+        min-height: 75px;
+        padding: 5px;
+      }
+
+      .evento-mini {
+        font-size: 9px;
+      }
+
+      .formulario {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .nombre-evento {
+        grid-column: 1 / -1;
+      }
+
+      .boton-agregar {
+        grid-column: 1 / -1;
+      }
+
+      .evento-completo {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="app">
+
+  <!-- ENCABEZADO -->
+
+  <div class="header">
+
+    <div class="titulo">
+      📅 Mi Calendario
+    </div>
+
+    <div class="botones-header">
+
+      <button onclick="irAHoy()">
+        Hoy
+      </button>
+
+      <select id="selectorAnio"
+              onchange="cambiarAnio()">
+      </select>
+
+    </div>
+
+  </div>
+
+
+  <!-- CAMBIO DE MES -->
+
+  <div class="selector-mes">
+
+    <button
+      class="flecha"
+      onclick="cambiarMes(-1)">
+      ◀
+    </button>
+
+    <h2 id="mesAnio">
+      Octubre 2026
+    </h2>
+
+    <button
+      class="flecha"
+      onclick="cambiarMes(1)">
+      ▶
+    </button>
+
+  </div>
+
+
+  <!-- CALENDARIO -->
+
+  <div class="calendario">
+
+    <div class="dias-semana">
+
+      <div class="dia-semana">Lun</div>
+      <div class="dia-semana">Mar</div>
+      <div class="dia-semana">Mié</div>
+      <div class="dia-semana">Jue</div>
+      <div class="dia-semana">Vie</div>
+      <div class="dia-semana">Sáb</div>
+      <div class="dia-semana">Dom</div>
+
+    </div>
+
+    <div
+      class="dias"
+      id="diasCalendario">
+    </div>
+
+  </div>
+
+
+  <!-- PANEL DE EVENTOS -->
+
+  <div class="panel">
+
+    <h3 id="tituloDia">
+      Seleccioná un día
+    </h3>
+
+
+    <div class="formulario">
+
+      <!-- Nombre -->
+
+      <input
+        id="nombreEvento"
+        class="nombre-evento"
+        type="text"
+        placeholder="Ej: Prueba de matemática">
+
+
+      <!-- Hora -->
+
+      <input
+        id="horaEvento"
+        type="time">
+
+
+      <!-- Recordatorio -->
+
+      <select id="recordatorio">
+
+        <option value="0">
+          Sin recordatorio
+        </option>
+
+        <option value="1">
+          1 día antes
+        </option>
+
+        <option value="3">
+          3 días antes
+        </option>
+
+        <option value="5">
+          5 días antes
+        </option>
+
+        <option value="7">
+          1 semana antes
+        </option>
+
+      </select>
+
+
+      <!-- Fecha -->
+
+      <input
+        id="fechaEvento"
+        type="date">
+
+
+      <!-- Botón -->
+
+      <button
+        class="boton-agregar"
+        onclick="agregarEvento()">
+
+        + Agregar evento
+
+      </button>
+
+    </div>
+
+
+    <!-- Eventos del día -->
+
+    <div
+      class="lista-eventos"
+      id="listaEventos">
+    </div>
+
+
+    <div class="nota">
+
+      💾 Los eventos se guardan automáticamente
+      en este navegador.
+
+      <br><br>
+
+      🔔 En esta versión los recordatorios quedan
+      configurados en el evento. Las notificaciones
+      reales del celular las agregaremos cuando
+      publiquemos la aplicación.
+
+    </div>
+
+  </div>
+
+</div>
+
+
+<script>
+
+/* =====================================================
+   DATOS PRINCIPALES
+===================================================== */
+
+const meses = [
+  "Enero",
+  "Febrero",
+  "Marzo",
+  "Abril",
+  "Mayo",
+  "Junio",
+  "Julio",
+  "Agosto",
+  "Septiembre",
+  "Octubre",
+  "Noviembre",
+  "Diciembre"
+];
+
+const diasSemana = [
+  "Lun",
+  "Mar",
+  "Mié",
+  "Jue",
+  "Vie",
+  "Sáb",
+  "Dom"
+];
+
+
+/* =====================================================
+   FECHA ACTUAL
+===================================================== */
+
+let fechaVista = new Date();
+
+fechaVista = new Date(
+  fechaVista.getFullYear(),
+  fechaVista.getMonth(),
+  1
+);
+
+
+let fechaSeleccionada = new Date();
+
+fechaSeleccionada.setHours(0,0,0,0);
+
+
+/* =====================================================
+   EVENTOS
+
+   Los cargamos desde localStorage.
+===================================================== */
+
+let eventos =
+  JSON.parse(
+    localStorage.getItem("misEventosCalendario")
+  ) || [];
+
+
+/* =====================================================
+   FUNCIONES AUXILIARES
+===================================================== */
+
+function agregarCero(numero) {
+
+  return String(numero).padStart(2, "0");
+
+}
+
+
+function convertirFechaAClave(fecha) {
+
+  return (
+    fecha.getFullYear()
+    + "-"
+    + agregarCero(fecha.getMonth() + 1)
+    + "-"
+    + agregarCero(fecha.getDate())
+  );
+
+}
+
+
+function escaparHTML(texto) {
+
+  return texto.replace(
+    /[&<>"']/g,
+    function(caracter) {
+
+      const mapa = {
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#039;"
+      };
+
+      return mapa[caracter];
+
+    }
+  );
+
+}
+
+
+/* =====================================================
+   GUARDAR EVENTOS
+===================================================== */
+
+function guardarEventos() {
+
+  localStorage.setItem(
+    "misEventosCalendario",
+    JSON.stringify(eventos)
+  );
+
+}
+
+
+/* =====================================================
+   DIBUJAR CALENDARIO
+===================================================== */
+
+function dibujarCalendario() {
+
+  const mes =
+    fechaVista.getMonth();
+
+  const anio =
+    fechaVista.getFullYear();
+
+
+  /* Título */
+
+  document.getElementById(
+    "mesAnio"
+  ).textContent =
+    meses[mes] + " " + anio;
+
+
+  /* Selector de años */
+
+  const selector =
+    document.getElementById(
+      "selectorAnio"
+    );
+
+  selector.innerHTML = "";
+
+
+  for (
+    let i = anio - 10;
+    i <= anio + 10;
+    i++
+  ) {
+
+    const opcion =
+      document.createElement("option");
+
+    opcion.value = i;
+
+    opcion.textContent = i;
+
+    if (i === anio) {
+      opcion.selected = true;
+    }
+
+    selector.appendChild(opcion);
+
+  }
+
+
+  /* Primer día del mes */
+
+  const primerDia =
+    new Date(anio, mes, 1);
+
+
+  /*
+    JavaScript:
+    Domingo = 0
+    Lunes = 1
+
+    Nosotros queremos:
+    Lunes = 0
+  */
+
+  let posicionInicial =
+    (primerDia.getDay() + 6) % 7;
+
+
+  /* Cantidad de días */
+
+  const cantidadDias =
+    new Date(
+      anio,
+      mes + 1,
+      0
+    ).getDate();
+
+
+  const diasCalendario =
+    document.getElementById(
+      "diasCalendario"
+    );
+
+
+  diasCalendario.innerHTML = "";
+
+
+  /*
+    Generamos 42 casilleros.
+
+    Esto permite mantener siempre
+    una grilla de 6 semanas.
+  */
+
+  for (
+    let i = 0;
+    i < 42;
+    i++
+  ) {
+
+    const numero =
+      i - posicionInicial + 1;
+
+
+    const fecha =
+      new Date(
+        anio,
+        mes,
+        numero
+      );
+
+
+    const estaEnMes =
+      numero >= 1 &&
+      numero <= cantidadDias;
+
+
+    const clave =
+      convertirFechaAClave(
+        fecha
+      );
+
+
+    /*
+      Buscamos eventos de ese día.
+    */
+
+    const eventosDelDia =
+      eventos.filter(
+        evento =>
+          evento.fecha === clave
+      );
+
+
+    const elemento =
+      document.createElement("div");
+
+
+    elemento.classList.add(
+      "dia"
+    );
+
+
+    if (!estaEnMes) {
+
+      elemento.classList.add(
+        "dia-otro-mes"
+      );
+
+    }
+
+
+    /*
+      ¿Es hoy?
+    */
+
+    const hoy =
+      new Date();
+
+
+    if (
+      fecha.getFullYear()
+      === hoy.getFullYear() &&
+
+      fecha.getMonth()
+      === hoy.getMonth() &&
+
+      fecha.getDate()
+      === hoy.getDate()
+    ) {
+
+      elemento.classList.add(
+        "hoy"
+      );
+
+    }
+
+
+    /*
+      ¿Tiene eventos?
+    */
+
+    if (
+      eventosDelDia.length > 0
+    ) {
+
+      elemento.classList.add(
+        "dia-con-evento"
+      );
+
+    }
+
+
+    /*
+      Número
+    */
+
+    elemento.innerHTML = `
+
+      <span class="numero">
+        ${fecha.getDate()}
+      </span>
+
+    `;
+
+
+    /*
+      PUNTITO DEBAJO DEL NÚMERO
+
+      Esto es exactamente lo que
+      pediste.
+    */
+
+    if (
+      eventosDelDia.length > 0
+    ) {
+
+      elemento.innerHTML += `
+
+        <span class="puntito"></span>
+
+      `;
+
+    }
+
+
+    /*
+      Mostramos hasta 3 eventos
+      dentro del casillero.
+    */
+
+    eventosDelDia
+      .slice(0, 3)
+      .forEach(evento => {
+
+        const eventoHTML =
+          document.createElement("div");
+
+        eventoHTML.classList.add(
+          "evento-mini"
+        );
+
+
+        eventoHTML.innerHTML = `
+
+          ${escaparHTML(evento.nombre)}
+
+          ${
+            evento.hora
+              ? `<div class="hora">
+                   🕐 ${evento.hora}
+                 </div>`
+              : ""
+          }
+
+        `;
+
+
+        elemento.appendChild(
+          eventoHTML
+        );
+
+      });
+
+
+    /*
+      Al tocar el día,
+      lo seleccionamos.
+    */
+
+    elemento.onclick = function() {
+
+      seleccionarDia(clave);
+
+    };
+
+
+    diasCalendario.appendChild(
+      elemento
+    );
+
+  }
+
+
+  mostrarEventosDelDia();
+
+}
+
+
+/* =====================================================
+   SELECCIONAR DÍA
+===================================================== */
+
+function seleccionarDia(clave) {
+
+  fechaSeleccionada =
+    new Date(
+      clave + "T00:00:00"
+    );
+
+
+  document.getElementById(
+    "fechaEvento"
+  ).value = clave;
+
+
+  mostrarEventosDelDia();
+
+}
+
+
+/* =====================================================
+   MOSTRAR EVENTOS DEL DÍA
+===================================================== */
+
+function mostrarEventosDelDia() {
+
+  const clave =
+    convertirFechaAClave(
+      fechaSeleccionada
+    );
+
+
+  const titulo =
+    document.getElementById(
+      "tituloDia"
+    );
+
+
+  titulo.textContent =
+    fechaSeleccionada.getDate()
+    + " de "
+    + meses[
+        fechaSeleccionada.getMonth()
+      ]
+    + " de "
+    + fechaSeleccionada.getFullYear();
+
+
+  const lista =
+    document.getElementById(
+      "listaEventos"
+    );
+
+
+  const eventosDelDia =
+    eventos.filter(
+      evento =>
+        evento.fecha === clave
+    );
+
+
+  lista.innerHTML = "";
+
+
+  if (
+    eventosDelDia.length === 0
+  ) {
+
+    lista.innerHTML = `
+
+      <div class="sin-eventos">
+
+        No hay eventos para este día.
+
+      </div>
+
+    `;
+
+    return;
+
+  }
+
+
+  eventosDelDia.forEach(
+    (evento, indice) => {
+
+      const elemento =
+        document.createElement("div");
+
+
+      elemento.classList.add(
+        "evento-completo"
+      );
+
+
+      let textoRecordatorio =
+        "Sin recordatorio";
+
+
+      if (
+        evento.recordatorio > 0
+      ) {
+
+        textoRecordatorio =
+          evento.recordatorio
+          + (
+              evento.recordatorio === 1
+                ? " día antes"
+                : " días antes"
+            );
+
+      }
+
+
+      elemento.innerHTML = `
+
+        <div class="evento-info">
+
+          <strong>
+            📝 ${escaparHTML(evento.nombre)}
+          </strong>
+
+          <br>
+
+          ${
+            evento.hora
+              ? `🕐 ${evento.hora}`
+              : "🕐 Sin hora"
+          }
+
+          <br>
+
+          <small>
+            🔔 ${textoRecordatorio}
+          </small>
+
+        </div>
+
+        <button>
+          🗑️ Eliminar
+        </button>
+
+      `;
+
+
+      /*
+        Botón eliminar
+      */
+
+      elemento
+        .querySelector("button")
+        .onclick = function() {
+
+          eliminarEvento(
+            evento
+          );
+
+        };
+
+
+      lista.appendChild(
+        elemento
+      );
+
+    }
+  );
+
+}
+
+
+/* =====================================================
+   AGREGAR EVENTO
+===================================================== */
+
+function agregarEvento() {
+
+  const nombre =
+    document.getElementById(
+      "nombreEvento"
+    ).value.trim();
+
+
+  const fecha =
+    document.getElementById(
+      "fechaEvento"
+    ).value;
+
+
+  const hora =
+    document.getElementById(
+      "horaEvento"
+    ).value;
+
+
+  const recordatorio =
+    Number(
+      document.getElementById(
+        "recordatorio"
+      ).value
+    );
+
+
+  if (!nombre) {
+
+    alert(
+      "Poné un nombre para el evento."
+    );
+
+    return;
+
+  }
+
+
+  if (!fecha) {
+
+    alert(
+      "Elegí una fecha."
+    );
+
+    return;
+
+  }
+
+
+  const nuevoEvento = {
+
+    id:
+      Date.now(),
+
+    nombre:
+      nombre,
+
+    fecha:
+      fecha,
+
+    hora:
+      hora,
+
+    recordatorio:
+      recordatorio
+
+  };
+
+
+  eventos.push(
+    nuevoEvento
+  );
+
+
+  guardarEventos();
+
+
+  /*
+    Limpiamos los campos.
+  */
+
+  document.getElementById(
+    "nombreEvento"
+  ).value = "";
+
+  document.getElementById(
+    "horaEvento"
+  ).value = "";
+
+  document.getElementById(
+    "recordatorio"
+  ).value = "0";
+
+
+  /*
+    Redibujamos todo.
+  */
+
+  dibujarCalendario();
+
+  seleccionarDia(fecha);
+
+}
+
+
+/* =====================================================
+   ELIMINAR EVENTO
+===================================================== */
+
+function eliminarEvento(
+  eventoAEliminar
+) {
+
+  eventos =
+    eventos.filter(
+      evento =>
+        evento.id !==
+        eventoAEliminar.id
+    );
+
+
+  guardarEventos();
+
+
+  dibujarCalendario();
+
+}
+
+
+/* =====================================================
+   CAMBIAR MES
+===================================================== */
+
+function cambiarMes(
+  cantidad
+) {
+
+  fechaVista =
+    new Date(
+      fechaVista.getFullYear(),
+      fechaVista.getMonth()
+        + cantidad,
+      1
+    );
+
+
+  dibujarCalendario();
+
+}
+
+
+/* =====================================================
+   CAMBIAR AÑO
+===================================================== */
+
+function cambiarAnio() {
+
+  const nuevoAnio =
+    Number(
+      document.getElementById(
+        "selectorAnio"
+      ).value
+    );
+
+
+  fechaVista =
+    new Date(
+      nuevoAnio,
+      fechaVista.getMonth(),
+      1
+    );
+
+
+  dibujarCalendario();
+
+}
+
+
+/* =====================================================
+   VOLVER A HOY
+===================================================== */
+
+function irAHoy() {
+
+  const hoy =
+    new Date();
+
+
+  fechaVista =
+    new Date(
+      hoy.getFullYear(),
+      hoy.getMonth(),
+      1
+    );
+
+
+  fechaSeleccionada =
+    new Date(
+      hoy.getFullYear(),
+      hoy.getMonth(),
+      hoy.getDate()
+    );
+
+
+  dibujarCalendario();
+
+}
+
+
+/* =====================================================
+   INICIO
+===================================================== */
+
+dibujarCalendario();
+
+</script>
+
+</body>
+</html>
